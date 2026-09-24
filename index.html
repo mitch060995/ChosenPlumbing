@@ -52,22 +52,76 @@
 
   <main id="top">
 
-    <!-- ============ HERO (adapted from MotionSites "Immersive Ocean" free prompt) ============ -->
-    <section class="hero">
-      <video class="hero-video" autoplay muted loop playsinline preload="auto" aria-hidden="true"
-        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_204221_5339e40b-e73d-4ab0-9c65-79c18c66fd50.mp4"></video>
-      <div class="hero-shade" aria-hidden="true"></div>
-      <div class="bubbles" aria-hidden="true"></div>
+    <!-- ============ HERO: scroll-driven rain scene that pans up to the logo ============ -->
+    <section class="rain-hero" id="rain-hero">
+      <div class="rh-stage">
+        <div class="rh-world">
+          <!-- Sky: clouds + logo reveal -->
+          <div class="rh-clouds" id="rh-clouds" aria-hidden="true"></div>
+          <div class="rh-reveal" id="rh-reveal">
+            <svg class="rh-mark" viewBox="-10 0 120 125" aria-hidden="true">
+              <defs>
+                <mask id="rhMask">
+                  <path d="M50 10 C 42 28, 14 46, 14 74 A 36 36 0 1 0 84 62" fill="none" stroke="#fff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+                </mask>
+                <linearGradient id="rhWater" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#7ff0ee" />
+                  <stop offset="1" stop-color="#1aa3a5" />
+                </linearGradient>
+              </defs>
+              <path id="rh-outline" class="rh-outline" d="M50 10 C 42 28, 14 46, 14 74 A 36 36 0 1 0 84 62" />
+              <g mask="url(#rhMask)">
+                <rect x="-10" y="0" width="120" height="125" fill="rgba(95,224,224,.08)" />
+                <path id="rh-wave" fill="url(#rhWater)" d="" />
+              </g>
+            </svg>
+            <div class="rh-wordmark" id="rh-wordmark" aria-label="Chosen">
+              <span>C</span><span>H</span><span>O</span><span>S</span><span>E</span><span>N</span>
+            </div>
+            <div class="rh-sub">· PLUMBING ·</div>
+            <p class="rh-tag">Rain, hail or shine — we won’t be beaten on service.</p>
+            <div class="rh-ctas">
+              <a href="#contact" class="btn btn-teal btn-lg">Get a free quote
+                <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
+              </a>
+              <a href="tel:0433953915" class="btn btn-ghost btn-lg">
+                <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><use href="#i-phone" /></svg>
+                0433 953 915
+              </a>
+            </div>
+          </div>
 
-      <div class="hero-content">
-        <div class="hero-top">
-          <p class="badge anim" style="--d:.2s"><span class="dot"></span> Commercial &amp; Residential · Gold Coast</p>
-          <h1 class="anim" style="--d:.4s">
-            We won’t be<br />
-            beaten on <span class="grad">service.</span>
-          </h1>
+          <!-- Street: house with gutters + downpipes -->
+          <div class="rh-street" aria-hidden="true">
+            <svg class="rh-house" viewBox="0 0 760 420" preserveAspectRatio="xMaxYMax meet">
+              <path class="sil" d="M60 200 L300 40 L560 200 L560 420 L60 420 Z" />
+              <path class="edge" d="M40 212 L300 40 L580 212" />
+              <path class="sil" d="M560 260 L720 260 L720 420 L560 420 Z" />
+              <path class="edge" d="M548 260 L732 260" />
+              <rect class="window-glow" x="130" y="250" width="110" height="80" />
+              <rect class="window" x="140" y="258" width="90" height="64" rx="3" />
+              <rect class="window-glow" x="360" y="250" width="110" height="80" />
+              <rect class="window" x="370" y="258" width="90" height="64" rx="3" />
+              <path d="M185 258v64M140 290h90M415 258v64M370 290h90" stroke="#08141e" stroke-width="4" />
+              <rect x="600" y="320" width="70" height="100" fill="#0d2230" />
+              <path class="gutter" d="M40 214 L20 214" />
+              <path class="gutter" d="M580 214 L600 214" />
+              <path class="pipe" d="M600 214 L600 236 Q600 244 608 244 L 740 244 L740 380 Q740 392 728 392 L712 392" />
+              <path class="gush" d="M712 392 Q700 396 696 412" />
+              <path class="gush" d="M712 394 Q704 402 704 416" style="animation-duration:.4s" />
+              <path class="pipe" d="M20 214 L20 392" />
+              <path class="gush" d="M20 392 L20 418" />
+            </svg>
+            <div class="rh-ground"></div>
+          </div>
         </div>
-        <div class="hero-bottom">
+
+        <div class="rh-flash" id="rh-flash" aria-hidden="true"></div>
+        <canvas class="rh-rain" id="rh-rain" aria-hidden="true"></canvas>
+
+        <div class="rh-copy">
+          <p class="badge anim" style="--d:.2s"><span class="dot"></span> Commercial &amp; Residential · Gold Coast</p>
+          <h1 class="anim" style="--d:.4s">We won’t be<br />beaten on <span class="grad">service.</span></h1>
           <p class="lead anim" style="--d:.7s">There’s no better choice when it comes to your plumbing, gas and hot water needs. Honest, hard work — delivered to the highest standard.</p>
           <div class="hero-ctas anim" style="--d:.9s">
             <a href="#contact" class="btn btn-light btn-lg">Get a free quote
@@ -79,9 +133,9 @@
             </a>
           </div>
         </div>
-      </div>
 
-      <a href="#services" class="scroll-cue" aria-label="Scroll to services"><span></span></a>
+        <div class="rh-hint" aria-hidden="true">Scroll<i></i></div>
+      </div>
     </section>
 
     <!-- ============ MARQUEE ============ -->

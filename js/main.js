@@ -12,7 +12,7 @@
   const onScroll = () => {
     const s = window.scrollY;
     nav.classList.toggle('scrolled', s > 40);
-    if (fab) fab.classList.toggle('show', s > window.innerHeight * 0.6);
+    if (fab) fab.classList.toggle('show', s > window.innerHeight * 0.3);
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
@@ -45,28 +45,147 @@
     reveals.forEach((el) => el.classList.add('in'));
   }
 
-  /* Rising bubbles in the hero */
-  const bubbles = document.querySelector('.bubbles');
-  if (bubbles && !reduceMotion) {
-    const count = window.innerWidth < 600 ? 10 : 20;
-    for (let i = 0; i < count; i++) {
-      const b = document.createElement('span');
-      b.className = 'bubble';
-      const size = 4 + Math.random() * 14;
-      b.style.width = b.style.height = size + 'px';
-      b.style.left = (40 + Math.random() * 58) + '%';
-      b.style.setProperty('--sway', (Math.random() * 60 - 30) + 'px');
-      b.style.animationDuration = (9 + Math.random() * 10) + 's';
-      b.style.animationDelay = (-Math.random() * 15) + 's';
-      bubbles.appendChild(b);
-    }
-  }
+  /* ---------------------------------------------------------------
+     Rain hero: rain + splashes on a canvas, lightning, and a
+     scroll-pinned camera pan up to the logo filling with water.
+     --------------------------------------------------------------- */
+  const hero = document.getElementById('rain-hero');
+  if (hero) {
+    const stage = hero.querySelector('.rh-stage');
+    const canvas = document.getElementById('rh-rain');
+    const ctx = canvas.getContext('2d');
+    const flash = document.getElementById('rh-flash');
+    const reveal = document.getElementById('rh-reveal');
+    const wordmark = document.getElementById('rh-wordmark');
+    const outline = document.getElementById('rh-outline');
+    const wave = document.getElementById('rh-wave');
+    const letters = [...wordmark.children];
+    letters.forEach((s, i) => { s.style.transitionDelay = i * 0.06 + 's'; });
 
-  /* Hero video: fall back gracefully if it can't load */
-  const vid = document.querySelector('.hero-video');
-  if (vid) {
-    vid.addEventListener('error', () => vid.remove());
-    if (reduceMotion) vid.pause();
+    // clouds
+    const clouds = document.getElementById('rh-clouds');
+    for (let i = 0; i < 9; i++) {
+      const c = document.createElement('div');
+      c.className = 'rh-cloud';
+      const w = 300 + Math.random() * 500;
+      c.style.width = w + 'px'; c.style.height = w * 0.45 + 'px';
+      c.style.left = (Math.random() * 100 - 20) + '%';
+      c.style.top = (Math.random() * 70) + '%';
+      c.style.animationDuration = (40 + Math.random() * 40) + 's';
+      c.style.animationDirection = i % 2 ? 'alternate-reverse' : 'alternate';
+      clouds.appendChild(c);
+    }
+
+    // logo outline draw
+    const len = outline.getTotalLength();
+    outline.style.strokeDasharray = len;
+    outline.style.strokeDashoffset = len;
+
+    // stage height = real visible height (fixes phones / in-app browsers)
+    const setStageH = () => document.documentElement.style.setProperty('--stage-h', window.innerHeight + 'px');
+
+    // scroll progress 0 → 1
+    let p = 0, pSmooth = 0, lastPan = 0;
+    const readScroll = () => {
+      if (reduceMotion) return;
+      const total = hero.offsetHeight - window.innerHeight;
+      p = Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / total));
+    };
+
+    // rain particles
+    let W = 0, H = 0, drops = [], splashes = [];
+    const WIND = 0.18;
+    const newDrop = (anyY) => {
+      const z = Math.random();
+      return { x: Math.random() * (W + 200) - 100, y: anyY ? Math.random() * H : -20 - Math.random() * 100,
+        z, len: 10 + z * 22, v: 9 + z * 14, a: 0.15 + z * 0.45, w: 0.6 + z * 1.2 };
+    };
+    const size = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = stage.clientWidth; H = stage.clientHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.round((W * H) / (W < 700 ? 5000 : 3500));
+      if (Math.abs(n - drops.length) > n * 0.25) drops = Array.from({ length: n }, () => newDrop(true));
+    };
+
+    const clamp = (v) => Math.min(1, Math.max(0, v));
+    const easeOut = (v) => 1 - Math.pow(1 - v, 3);
+    let heroVisible = true;
+
+    const frame = () => {
+      pSmooth += (p - pSmooth) * 0.12;
+      const pe = pSmooth;
+      stage.style.setProperty('--p', pe.toFixed(4));
+      const panV = (pe - lastPan) * H;
+      lastPan = pe;
+
+      if (heroVisible) {
+        const groundY = H * 0.93 + pe * H;
+        ctx.clearRect(0, 0, W, H);
+        ctx.lineCap = 'round';
+        for (const d of drops) {
+          d.y += d.v + panV * (0.6 + d.z);
+          d.x += d.v * WIND;
+          const stretch = d.len + Math.abs(panV) * 2;
+          ctx.strokeStyle = `rgba(175, 225, 240, ${d.a})`;
+          ctx.lineWidth = d.w;
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - WIND * stretch, d.y - stretch);
+          ctx.stroke();
+          const hitY = groundY - (1 - d.z) * H * 0.05;
+          if (d.y > hitY && hitY < H) {
+            if (d.z > 0.45) for (let k = 0; k < 3; k++) splashes.push({ x: d.x, y: hitY, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3 - 1, life: 1 });
+            Object.assign(d, newDrop(false));
+          } else if (d.y > H + 40 || d.x > W + 120) {
+            Object.assign(d, newDrop(false));
+          }
+        }
+        ctx.fillStyle = 'rgba(190, 240, 245, .7)';
+        splashes = splashes.filter((s) => (s.life -= 0.05) > 0);
+        for (const s of splashes) {
+          s.vy += 0.25; s.x += s.vx; s.y += s.vy;
+          ctx.globalAlpha = s.life;
+          ctx.beginPath(); ctx.arc(s.x, s.y, 1.3, 0, 6.283); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // logo: outline draws 30%→60%, water fills 40%→85%, text from 80%
+        outline.style.strokeDashoffset = len * (1 - clamp((pe - 0.30) / 0.30));
+        const fill = easeOut(clamp((pe - 0.40) / 0.45));
+        const level = 118 - fill * 118;
+        const t = performance.now() / 600;
+        let d = `M -10 ${level}`;
+        for (let x = -10; x <= 110; x += 5) d += ` L ${x} ${level + Math.sin(x / 9 + t) * (fill < 1 ? 2.2 : 1.1)}`;
+        wave.setAttribute('d', d + ' L 110 130 L -10 130 Z');
+        const on = pe > 0.8;
+        reveal.classList.toggle('on', on);
+        wordmark.classList.toggle('on', on);
+      }
+      if (!reduceMotion) requestAnimationFrame(frame);
+    };
+
+    // pause drawing while the hero is off-screen
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([en]) => { heroVisible = en.isIntersecting; }).observe(hero);
+    }
+
+    const lightning = () => {
+      if (heroVisible && flash.animate) {
+        flash.animate(
+          [{ opacity: 0 }, { opacity: 0.9, offset: 0.05 }, { opacity: 0.1, offset: 0.15 }, { opacity: 0.7, offset: 0.22 }, { opacity: 0 }],
+          { duration: 900, easing: 'ease-out' }
+        );
+      }
+      setTimeout(lightning, 6000 + Math.random() * 9000);
+    };
+
+    setStageH(); size(); readScroll();
+    window.addEventListener('scroll', readScroll, { passive: true });
+    window.addEventListener('resize', () => { setStageH(); size(); readScroll(); });
+    requestAnimationFrame(frame);
+    if (!reduceMotion) setTimeout(lightning, 2500);
   }
 
   /* Card tilt + cursor glow */

@@ -85,7 +85,7 @@
     const setStageH = () => document.documentElement.style.setProperty('--stage-h', window.innerHeight + 'px');
 
     // scroll progress 0 → 1
-    let p = 0, pSmooth = 0, lastPan = 0;
+    let p = 0, pSmooth = 0, lastPan = 0, isOn = false;
     const readScroll = () => {
       if (reduceMotion) return;
       const total = hero.offsetHeight - window.innerHeight;
@@ -111,17 +111,22 @@
 
     const clamp = (v) => Math.min(1, Math.max(0, v));
     const easeOut = (v) => 1 - Math.pow(1 - v, 3);
+    const easeInOut = (v) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
     let heroVisible = true;
 
     const frame = () => {
-      pSmooth += (p - pSmooth) * 0.12;
+      // gentle glide towards the real scroll position
+      pSmooth += (p - pSmooth) * 0.07;
       const pe = pSmooth;
-      stage.style.setProperty('--p', pe.toFixed(4));
-      const panV = (pe - lastPan) * H;
-      lastPan = pe;
+      // Timeline: 0–55% camera pans up (eased), 25–60% logo draws + fills,
+      // 58–100% the logo + message hold on screen before the page moves on.
+      const pan = easeInOut(clamp(pe / 0.55));
+      stage.style.setProperty('--p', pan.toFixed(4));
+      const panV = Math.max(-30, Math.min(30, (pan - lastPan) * H));
+      lastPan = pan;
 
       if (heroVisible) {
-        const groundY = H * 0.93 + pe * H;
+        const groundY = H * 0.93 + pan * H;
         ctx.clearRect(0, 0, W, H);
         ctx.lineCap = 'round';
         for (const d of drops) {
@@ -151,17 +156,18 @@
         }
         ctx.globalAlpha = 1;
 
-        // logo: outline draws 30%→60%, water fills 40%→85%, text from 80%
-        outline.style.strokeDashoffset = len * (1 - clamp((pe - 0.30) / 0.30));
-        const fill = easeOut(clamp((pe - 0.40) / 0.45));
+        outline.style.strokeDashoffset = len * (1 - easeInOut(clamp((pe - 0.25) / 0.25)));
+        const fill = easeOut(clamp((pe - 0.32) / 0.30));
         const level = 118 - fill * 118;
         const t = performance.now() / 600;
         let d = `M -10 ${level}`;
         for (let x = -10; x <= 110; x += 5) d += ` L ${x} ${level + Math.sin(x / 9 + t) * (fill < 1 ? 2.2 : 1.1)}`;
         wave.setAttribute('d', d + ' L 110 130 L -10 130 Z');
-        const on = pe > 0.8;
-        reveal.classList.toggle('on', on);
-        wordmark.classList.toggle('on', on);
+        // hysteresis so the message doesn't flicker at the threshold
+        if (!isOn && pe > 0.56) isOn = true;
+        else if (isOn && pe < 0.48) isOn = false;
+        reveal.classList.toggle('on', isOn);
+        wordmark.classList.toggle('on', isOn);
       }
       if (!reduceMotion) requestAnimationFrame(frame);
     };

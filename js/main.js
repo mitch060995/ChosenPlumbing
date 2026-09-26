@@ -259,6 +259,7 @@
       const data = {
         name: name.value.trim(),
         phone: phone.value.trim(),
+        company: form.elements.company.value.trim() || '-',
         suburb: form.elements.suburb.value.trim() || '-',
         service: [...form.querySelectorAll('input[name=service]:checked')].map((c) => c.value).join(', ') || 'Not specified',
         message: form.elements.message.value.trim() || '-'
@@ -290,7 +291,7 @@
       }
 
       const body = [
-        `Name: ${data.name}`, `Phone: ${data.phone}`, `Suburb: ${data.suburb}`, `Service: ${data.service}`, '', data.message
+        `Name: ${data.name}`, `Business: ${data.company}`, `Phone: ${data.phone}`, `Suburb: ${data.suburb}`, `Service: ${data.service}`, '', data.message
       ].join('\n');
       window.location.href = `mailto:${BUSINESS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       note.textContent = 'Your email app should open — just hit send. Nothing happened? Call 0433 953 915.';

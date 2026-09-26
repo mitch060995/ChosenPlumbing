@@ -314,6 +314,11 @@ a { color: inherit; text-decoration: none; }
   transition: transform .8s var(--ease);
 }
 .mini:hover::after { transform: scale(1.5); }
+.split-cards { grid-template-columns: 1.5fr 1fr; }
+.sectors { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.2rem; position: relative; z-index: 1; }
+.sectors li { font-size: .82rem; font-weight: 500; padding: .35rem .8rem; border-radius: 999px; border: 1px solid rgba(95,224,224,.35); color: rgba(255,255,255,.85); background: rgba(39,189,190,.08); }
+.lights { animation: lights 4s steps(1) infinite; }
+@keyframes lights { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 .mini-tag { display: inline-block; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--teal-2); margin-bottom: .6rem; }
 .mini h3 { font-size: 1.6rem; letter-spacing: -.02em; margin-bottom: .4rem; }
 .mini p { color: rgba(255,255,255,.72); max-width: 30rem; }
@@ -425,6 +430,7 @@ a { color: inherit; text-decoration: none; }
 .contact-list small { display: block; font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
 .contact-list a, .contact-list span { font-weight: 600; color: var(--navy); }
 .contact-list a:hover { color: var(--teal-deep); }
+.contact-list .ci { color: var(--teal); }
 
 .quote-form {
   background: #fff; padding: clamp(1.6rem, 4vw, 2.6rem); border-radius: 28px;
